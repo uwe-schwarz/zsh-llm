@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_ENDPOINT = "https://api.openai.com/v1/responses";
-const DEFAULT_MODEL = "gpt-4.1";
+const DEFAULT_MODEL = "gpt-5.1";
 const DEFAULT_SYSTEM_PROMPT_TEMPLATE =
   "Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.";
 const SUPPORTED_SHELLS = new Set(["zsh"]);
@@ -195,6 +195,7 @@ async function main() {
     temperature: 0,
     top_p: 1,
     max_output_tokens: 300,
+    reasoning: { effort: "none" },
   };
 
   const stopSpinner = startSpinner();
