@@ -1,0 +1,12 @@
+{
+  "name": "zsh-llm-helper",
+  "version": "0.1.0",
+  "description": "Fast helper that calls the OpenAI Responses API and plugs into Zsh command completion",
+  "type": "module",
+  "bin": {
+    "zsh-llm": "./bin/zsh-llm.js"
+  },
+  "keywords": ["zsh", "openai", "responses", "shell", "llm"],
+  "author": "",
+  "license": "MIT"
+}

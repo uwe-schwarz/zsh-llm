@@ -1,0 +1,27 @@
+# Environment
+.env
+.env.*
+
+# Node packages
+node_modules/
+
+# Build outputs
+dist/
+coverage/
+*.log
+
+# OS
+.DS_Store
+
+# Editor config
+.vscode/
+.idea/
+
+# bun
+bun.lockb
+
+# Misc
+npm-debug.log
+yarn-error.log
+*.tmp
+*.tsbuildinfo
