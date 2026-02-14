@@ -1,10 +1,10 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import fs from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_ENDPOINT = "https://api.openai.com/v1/responses";
-const DEFAULT_MODEL = "gpt-5.1";
+const DEFAULT_MODEL = "gpt-5.2";
 const DEFAULT_SYSTEM_PROMPT_TEMPLATE =
   "Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.";
 const SUPPORTED_SHELLS = new Set(["zsh"]);
@@ -59,7 +59,7 @@ function helpText() {
 Options:
   -i, --init SHELL     print the integration snippet for the supported shell (zsh)
   -s, --system PROMPT  custom system prompt to send before the command
-  -m, --model MODEL    override the model (default from environment or gpt-4.1)
+  -m, --model MODEL    override the model (default from environment or ${DEFAULT_MODEL})
   -k, --key KEY        API key (defaults to ZSH_LLM_API_KEY or OPENAI_API_KEY)
   -e, --endpoint URL   API endpoint (defaults to ${DEFAULT_ENDPOINT})
   -h, --help           show this message

@@ -11,14 +11,22 @@ Lightweight CLI that sends your current Zsh buffer + a system prompt to the Open
 ## Installation
 
 ```bash
-# Install globally with npm or yarn (any Node >=18 runtime works):
-npm install -g .
+# Install globally with Bun (recommended):
+bun add -g .
 
-# If you prefer bun's runner:
+# Run directly without installing:
 bunx ./bin/zsh-llm.js <options> "command text"
 ```
 
-> You can also bring this repository into `/path/to/tool` and run `bunx /path/to/tool/bin/zsh-llm.js` (or `uv x` if you use [uv](https://github.com/vercel/uv)) directly without installing.
+By default, Bun installs global binaries into `~/.bun/bin`. Make sure that directory is on your `PATH`.
+If you prefer `~/.local/bin`, create a symlink there:
+
+```bash
+mkdir -p ~/.local/bin
+ln -sf ~/.bun/bin/zsh-llm ~/.local/bin/zsh-llm
+```
+
+> You can also bring this repository into `/path/to/tool` and run `bunx /path/to/tool/bin/zsh-llm.js` directly without installing.
 
 ## Configuration
 
@@ -26,7 +34,7 @@ bunx ./bin/zsh-llm.js <options> "command text"
 | --- | --- | --- |
 | `ZSH_LLM_API_KEY` | OpenAI API key (falls back to `OPENAI_API_KEY`) | _required_ |
 | `ZSH_LLM_ENDPOINT` | API endpoint | `https://api.openai.com/v1/responses` |
-| `ZSH_LLM_MODEL` | Model name (e.g. `gpt-4.1`) | `gpt-4.1` |
+| `ZSH_LLM_MODEL` | Model name (e.g. `gpt-5.2`) | `gpt-5.2` |
 | `ZSH_LLM_SYSTEM` | System prompt template | `Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.` |
 | `ZSH_LLM_BINDKEY` | Key sequence to trigger the integration | `Alt-\` |
 
