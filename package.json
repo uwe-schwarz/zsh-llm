@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Fast helper that calls the OpenAI Responses API and plugs into Zsh command completion",
   "type": "module",
+  "packageManager": "bun@1.3.9",
+  "engines": {
+    "bun": ">=1.3.9"
+  },
   "bin": {
     "zsh-llm": "./bin/zsh-llm.js"
   },
