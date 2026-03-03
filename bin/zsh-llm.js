@@ -100,7 +100,12 @@ function resolveSystem(opt) {
 }
 
 function resolveReasoningEffort() {
-  return process.env.ZSH_LLM_REASONING_EFFORT || "none";
+  const value = (process.env.ZSH_LLM_REASONING_EFFORT || "none").trim().toLowerCase();
+  const allowed = new Set(["none", "low", "medium", "high"]);
+  if (!allowed.has(value)) {
+    throw new Error("Invalid ZSH_LLM_REASONING_EFFORT; expected one of: none, low, medium, high.");
+  }
+  return value;
 }
 
 function resolveTemperature() {
