@@ -64,7 +64,7 @@ Options:
   -e, --endpoint URL   API endpoint (defaults to ${DEFAULT_ENDPOINT})
   -h, --help           show this message
 
-You can also set env vars: ZSH_LLM_API_KEY, ZSH_LLM_ENDPOINT, ZSH_LLM_MODEL, ZSH_LLM_SYSTEM.
+You can also set env vars: ZSH_LLM_API_KEY, ZSH_LLM_ENDPOINT, ZSH_LLM_MODEL, ZSH_LLM_SYSTEM, ZSH_LLM_REASONING_EFFORT, ZSH_LLM_TEMPERATURE.
 `;
 }
 
@@ -97,6 +97,25 @@ function resolveSystem(opt) {
   const shell = path.basename(process.env.SHELL || "sh");
   const platform = process.platform;
   return DEFAULT_SYSTEM_PROMPT_TEMPLATE.replace("$shell", shell).replace("$platform", platform);
+}
+
+function resolveReasoningEffort() {
+  const value = (process.env.ZSH_LLM_REASONING_EFFORT || "none").trim().toLowerCase();
+  const allowed = new Set(["none", "low", "medium", "high"]);
+  if (!allowed.has(value)) {
+    throw new Error("Invalid ZSH_LLM_REASONING_EFFORT; expected one of: none, low, medium, high.");
+  }
+  return value;
+}
+
+function resolveTemperature() {
+  const raw = process.env.ZSH_LLM_TEMPERATURE;
+  if (raw === undefined || raw === "") return 0;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) {
+    throw new Error("Invalid ZSH_LLM_TEMPERATURE; expected a number or -1 to omit temperature.");
+  }
+  return value < 0 ? null : value;
 }
 
 async function query(apiEndpoint, key, payload) {
@@ -185,6 +204,8 @@ async function main() {
   const apiEndpoint = resolveEndpoint(opts.endpoint);
   const model = resolveModel(opts.model);
   const systemPrompt = resolveSystem(opts.system);
+  const reasoningEffort = resolveReasoningEffort();
+  const temperature = resolveTemperature();
 
   const payload = {
     model,
@@ -192,11 +213,13 @@ async function main() {
       { role: "system", content: systemPrompt },
       { role: "user", content: prompt },
     ],
-    temperature: 0,
     top_p: 1,
     max_output_tokens: 300,
-    reasoning: { effort: "none" },
+    reasoning: { effort: reasoningEffort },
   };
+  if (temperature !== null) {
+    payload.temperature = temperature;
+  }
 
   const stopSpinner = startSpinner();
   let result;

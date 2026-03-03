@@ -36,6 +36,8 @@ ln -sf ~/.bun/bin/zsh-llm ~/.local/bin/zsh-llm
 | `ZSH_LLM_ENDPOINT` | API endpoint | `https://api.openai.com/v1/responses` |
 | `ZSH_LLM_MODEL` | Model name (e.g. `gpt-5.2`) | `gpt-5.2` |
 | `ZSH_LLM_SYSTEM` | System prompt template | `Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.` |
+| `ZSH_LLM_REASONING_EFFORT` | Reasoning effort passed to Responses API (`none`, `low`, `medium`, `high`) | `none` |
+| `ZSH_LLM_TEMPERATURE` | Temperature passed to Responses API. Set to `-1` to omit `temperature` from the request. | `0` |
 | `ZSH_LLM_BINDKEY` | Key sequence to trigger the integration | `Alt-\` |
 
 ## Zsh integration
