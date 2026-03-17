@@ -34,7 +34,7 @@ ln -sf ~/.bun/bin/zsh-llm ~/.local/bin/zsh-llm
 | --- | --- | --- |
 | `ZSH_LLM_API_KEY` | OpenAI API key (falls back to `OPENAI_API_KEY`) | _required_ |
 | `ZSH_LLM_ENDPOINT` | API endpoint | `https://api.openai.com/v1/responses` |
-| `ZSH_LLM_MODEL` | Model name (e.g. `gpt-5.4`) | `gpt-5.4` |
+| `ZSH_LLM_MODEL` | Model name (e.g. `gpt-5.4-mini`) | `gpt-5.4-mini` |
 | `ZSH_LLM_SYSTEM` | System prompt template | `Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.` |
 | `ZSH_LLM_REASONING_EFFORT` | Reasoning effort passed to Responses API (`none`, `low`, `medium`, `high`) | `none` |
 | `ZSH_LLM_TEMPERATURE` | Temperature passed to Responses API. Set to `-1` to omit `temperature` from the request. | `0` |
@@ -69,7 +69,7 @@ zsh-llm "undo last commit"
 You can also override every option inline:
 
 ```bash
-zsh-llm --model "gpt-5.4" --system "You are a safe shell assistant." "ls /tmp"
+zsh-llm --model "gpt-5.4-mini" --system "You are a safe shell assistant." "ls /tmp"
 ```
 
 Responses are printed directly to stdout so your shell integration can capture them without extra formatting, and a small spinner/`Generating…` indicator animates on stderr while the model is thinking.
