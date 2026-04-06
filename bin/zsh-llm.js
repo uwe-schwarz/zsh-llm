@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -64,7 +65,7 @@ Options:
   -e, --endpoint URL   API endpoint (defaults to ${DEFAULT_ENDPOINT})
   -h, --help           show this message
 
-You can also set env vars: ZSH_LLM_API_KEY, ZSH_LLM_ENDPOINT, ZSH_LLM_MODEL, ZSH_LLM_SYSTEM, ZSH_LLM_REASONING_EFFORT, ZSH_LLM_TEMPERATURE.
+You can also set env vars: ZSH_LLM_API_KEY, ZSH_LLM_ENDPOINT, ZSH_LLM_MODEL, ZSH_LLM_SYSTEM, ZSH_LLM_REASONING_EFFORT, ZSH_LLM_TEMPERATURE, ZSH_LLM_MACOS_SHORTCUT.
 `;
 }
 
@@ -118,6 +119,61 @@ function resolveTemperature() {
   return value < 0 ? null : value;
 }
 
+function resolveMacOSShortcutName() {
+  const value = process.env.ZSH_LLM_MACOS_SHORTCUT?.trim();
+  return value ? value : null;
+}
+
+function buildShortcutPrompt(systemPrompt, prompt) {
+  return `${systemPrompt} User prompt: ${prompt}`;
+}
+
+async function runCommand(command, args, { input } = {}) {
+  return await new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: "pipe" });
+    const stdoutChunks = [];
+    const stderrChunks = [];
+
+    child.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+    child.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString("utf8");
+      const stderr = Buffer.concat(stderrChunks).toString("utf8");
+      if (code === 0) {
+        resolve({ stdout, stderr });
+        return;
+      }
+      reject(new Error(stderr.trim() || `${command} exited with code ${code}`));
+    });
+
+    child.stdin.end(input);
+  });
+}
+
+async function hasShortcut(name) {
+  if (!name || process.platform !== "darwin") {
+    return false;
+  }
+  try {
+    const { stdout } = await runCommand("shortcuts", ["list"]);
+    const shortcuts = new Set(
+      stdout
+        .split(/\r?\n/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+    );
+    return shortcuts.has(name);
+  } catch {
+    return false;
+  }
+}
+
+async function queryShortcut(shortcutName, input) {
+  const { stdout } = await runCommand("shortcuts", ["run", shortcutName, "--input-path", "-"], { input });
+  return stdout;
+}
+
 async function query(apiEndpoint, key, payload) {
   const response = await fetch(apiEndpoint, {
     method: "POST",
@@ -156,6 +212,15 @@ function extractText(result) {
     return result.output_text;
   }
   return null;
+}
+
+function sanitizeCommandOutput(message) {
+  const trimmed = message.trim();
+  const fencedBlock = trimmed.match(/^```(?:[\w.+-]+)?\n([\s\S]*?)\n```$/);
+  if (fencedBlock) {
+    return fencedBlock[1].trim();
+  }
+  return trimmed;
 }
 
 function startSpinner(message = "Generating…") {
@@ -197,13 +262,28 @@ async function main() {
     process.exit(1);
   }
 
+  const systemPrompt = resolveSystem(opts.system);
+  const macOSShortcutName = resolveMacOSShortcutName();
+  if (await hasShortcut(macOSShortcutName)) {
+    const stopSpinner = startSpinner(`Generating via shortcut:${macOSShortcutName}…`);
+    try {
+      const result = await queryShortcut(macOSShortcutName, buildShortcutPrompt(systemPrompt, prompt));
+      if (!result.trim()) {
+        throw new Error(`Shortcut "${macOSShortcutName}" returned no output.`);
+      }
+      console.log(sanitizeCommandOutput(result));
+      return;
+    } finally {
+      stopSpinner();
+    }
+  }
+
   const apiKey = resolveKey(opts.key);
   if (!apiKey) {
     throw new Error("Missing API key; set ZSH_LLM_API_KEY, OPENAI_API_KEY, or pass --key.");
   }
   const apiEndpoint = resolveEndpoint(opts.endpoint);
   const model = resolveModel(opts.model);
-  const systemPrompt = resolveSystem(opts.system);
   const reasoningEffort = resolveReasoningEffort();
   const temperature = resolveTemperature();
 
@@ -221,7 +301,7 @@ async function main() {
     payload.temperature = temperature;
   }
 
-  const stopSpinner = startSpinner();
+  const stopSpinner = startSpinner(`Generating via model:${model}…`);
   let result;
   try {
     result = await query(apiEndpoint, apiKey, payload);
@@ -232,7 +312,7 @@ async function main() {
   if (!message) {
     throw new Error("Response does not include output text.");
   }
-  console.log(message.trim());
+  console.log(sanitizeCommandOutput(message));
 }
 
 main().catch((error) => {

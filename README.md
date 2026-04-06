@@ -5,6 +5,7 @@ Lightweight CLI that sends your current Zsh buffer + a system prompt to the Open
 ## Features
 
 - `zsh-llm` CLI talks directly to the Responses API with a configurable model, endpoint, and system prompt.
+- On macOS, `zsh-llm` can optionally route prompts through a local Shortcuts workflow instead of the API client.
 - `--init zsh` emits a Zsh-friendly integration that binds a key (default `Alt-\`) to the CLI so it can rewrite the current buffer in-place.
 - Environment variables let you point at any API endpoint and key without touching the script.
 
@@ -38,7 +39,33 @@ ln -sf ~/.bun/bin/zsh-llm ~/.local/bin/zsh-llm
 | `ZSH_LLM_SYSTEM` | System prompt template | `Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.` |
 | `ZSH_LLM_REASONING_EFFORT` | Reasoning effort passed to Responses API (`none`, `low`, `medium`, `high`) | `none` |
 | `ZSH_LLM_TEMPERATURE` | Temperature passed to Responses API. Set to `-1` to omit `temperature` from the request. | `0` |
+| `ZSH_LLM_MACOS_SHORTCUT` | On `darwin`, if this exact shortcut name exists in `shortcuts list`, use it instead of the API client. | unset |
 | `ZSH_LLM_BINDKEY` | Key sequence to trigger the integration | `Alt-\` |
+
+## macOS Shortcut Mode
+
+If you prefer Apple Shortcuts on macOS, set the local shortcut name:
+
+```bash
+export ZSH_LLM_MACOS_SHORTCUT="zsh-llm-chatgpt"
+```
+
+When `zsh-llm` runs on `darwin`, it will:
+
+1. Check whether the configured shortcut exists in `shortcuts list`.
+2. If it exists, send this text to the shortcut via stdin: `<system prompt> User prompt: <your shell buffer>`.
+3. Print the shortcut output directly to stdout.
+4. Fall back to the normal Responses API path if the shortcut is not installed.
+
+That means `ZSH_LLM_API_KEY` is not required when the shortcut path is active.
+
+The shortcut used for this repo is available here:
+https://www.icloud.com/shortcuts/3ef13907eb0b44e8a33c9ab2e2b3a262
+
+The extracted local workflow actions are committed in [shortcuts/zsh-llm-chatgpt.actions.plist](shortcuts/zsh-llm-chatgpt.actions.plist).
+
+1. `Use ChatGPT` with the shortcut input token as the prompt.
+2. `Stop and output` the `Response` value as text.
 
 ## Zsh integration
 
