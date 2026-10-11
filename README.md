@@ -11,23 +11,14 @@ Lightweight CLI that sends your current Zsh buffer + a system prompt to the Open
 
 ## Installation
 
-```bash
-# Install globally with Bun (recommended):
-bun add -g .
+The fleet uses the canonical checkout at `~/dev/zsh-llm` and the shared
+`~/bin/zsh-llm` shell launcher. Prepare it with `workspace install zsh-llm`.
+The launcher executes Bun directly; no global package copy or Python process
+is required. Source `~/dev/zsh-llm/share/zsh-llm.zsh` to install the input widget
+without launching Bun during shell startup.
 
-# Run directly without installing:
-bunx ./bin/zsh-llm.js <options> "command text"
-```
-
-By default, Bun installs global binaries into `~/.bun/bin`. Make sure that directory is on your `PATH`.
-If you prefer `~/.local/bin`, create a symlink there:
-
-```bash
-mkdir -p ~/.local/bin
-ln -sf ~/.bun/bin/zsh-llm ~/.local/bin/zsh-llm
-```
-
-> You can also bring this repository into `/path/to/tool` and run `bunx /path/to/tool/bin/zsh-llm.js` directly without installing.
+Outside the fleet, run `bun bin/zsh-llm.js` from this checkout or add your own
+shell launcher pointing to it.
 
 ## Configuration
 
@@ -39,7 +30,7 @@ ln -sf ~/.bun/bin/zsh-llm ~/.local/bin/zsh-llm
 | `ZSH_LLM_SYSTEM` | System prompt template | `Return only the command to be executed as a raw string, no markdown, no fenced code, no explanation. The shell is $shell on $platform.` |
 | `ZSH_LLM_REASONING_EFFORT` | Reasoning effort passed to Responses API (`none`, `low`, `medium`, `high`) | `none` |
 | `ZSH_LLM_TEMPERATURE` | Temperature passed to Responses API. Set to `-1` to omit `temperature` from the request. | `0` |
-| `ZSH_LLM_MACOS_SHORTCUT` | On `darwin`, if this exact shortcut name exists in `shortcuts list`, use it instead of the API client. | unset |
+| `ZSH_LLM_MACOS_SHORTCUT` | On `darwin`, run this exact shortcut directly instead of the API client. | unset |
 | `ZSH_LLM_BINDKEY` | Key sequence to trigger the integration | `Alt-\` |
 
 ## macOS Shortcut Mode
@@ -52,12 +43,13 @@ export ZSH_LLM_MACOS_SHORTCUT="zsh-llm-chatgpt"
 
 When `zsh-llm` runs on `darwin`, it will:
 
-1. Check whether the configured shortcut exists in `shortcuts list`.
-2. If it exists, send this text to the shortcut via stdin: `<system prompt> User prompt: <your shell buffer>`.
-3. Print the shortcut output directly to stdout.
-4. Fall back to the normal Responses API path if the shortcut is not installed.
+1. Send this text to the configured shortcut via stdin: `<system prompt> User prompt: <your shell buffer>`.
+2. Print the sanitized shortcut output to stdout.
+3. Report a shortcut failure without switching to another provider.
 
-That means `ZSH_LLM_API_KEY` is not required when the shortcut path is active.
+There is no `shortcuts list` discovery process on the request path.
+`ZSH_LLM_API_KEY` is not required in shortcut mode. Without a configured shortcut,
+the existing Responses API configuration remains available.
 
 The shortcut used for this repo is available here:
 https://www.icloud.com/shortcuts/3ef13907eb0b44e8a33c9ab2e2b3a262
@@ -70,22 +62,21 @@ The extracted local workflow actions are committed in [shortcuts/zsh-llm-chatgpt
 ## Zsh integration
 
 ```bash
-# output the integration snippet and source it
-zsh-llm --init zsh > ~/.zsh-llm.sh
-source ~/.zsh-llm.sh
+# Load the maintained integration directly; no helper process starts here.
+source ~/dev/zsh-llm/share/zsh-llm.zsh
 ```
 
 The snippet binds `Alt-\` to the helper by default. You can change the key at runtime:
 
 ```bash
 export ZSH_LLM_BINDKEY=$'\e>'  # bind Alt->
-source ~/.zsh-llm.sh
+source ~/dev/zsh-llm/share/zsh-llm.zsh
 ```
 
 When the binding runs, it:
-1. Takes `$BUFFER` (the current line) and sends it to the Responses API with the system prompt.
+1. Takes `$BUFFER` (the current line) and sends it to the configured shortcut or Responses API with the system prompt. Empty input does nothing.
 2. Replaces the buffer with the LLM's reply, if any, otherwise restores the original text.
-3. Resets the prompt so you can review or run the suggested command.
+3. Resets the prompt so you can review or run the suggested command. It never executes the reply automatically. The binding is installed in both Emacs and vi insert mode.
 
 ## CLI usage
 

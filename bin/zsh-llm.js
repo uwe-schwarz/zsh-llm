@@ -151,24 +151,6 @@ async function runCommand(command, args, { input } = {}) {
   });
 }
 
-async function hasShortcut(name) {
-  if (!name || process.platform !== "darwin") {
-    return false;
-  }
-  try {
-    const { stdout } = await runCommand("shortcuts", ["list"]);
-    const shortcuts = new Set(
-      stdout
-        .split(/\r?\n/)
-        .map((value) => value.trim())
-        .filter(Boolean)
-    );
-    return shortcuts.has(name);
-  } catch {
-    return false;
-  }
-}
-
 async function queryShortcut(shortcutName, input) {
   const { stdout } = await runCommand("shortcuts", ["run", shortcutName, "--input-path", "-"], { input });
   return stdout;
@@ -264,7 +246,7 @@ async function main() {
 
   const systemPrompt = resolveSystem(opts.system);
   const macOSShortcutName = resolveMacOSShortcutName();
-  if (await hasShortcut(macOSShortcutName)) {
+  if (process.platform === "darwin" && macOSShortcutName) {
     const stopSpinner = startSpinner(`Generating via shortcut:${macOSShortcutName}…`);
     try {
       const result = await queryShortcut(macOSShortcutName, buildShortcutPrompt(systemPrompt, prompt));
