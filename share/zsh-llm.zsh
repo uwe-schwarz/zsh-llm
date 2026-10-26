@@ -7,7 +7,10 @@ __zsh_llm_apply() {
   local cursor=$CURSOR
   echo
   local result
-  if ! result=$(zsh-llm "$current_buffer"); then
+  if ! result=$(ZSH_LLM_SHELL_PATH=${commands[zsh]:-${SHELL:-zsh}} \
+    ZSH_LLM_SHELL_VERSION=$ZSH_VERSION \
+    ZSH_LLM_SHELL_OPTIONS="nomatch=${options[nomatch]},glob=${options[glob]},nullglob=${options[nullglob]},extendedglob=${options[extendedglob]},interactivecomments=${options[interactivecomments]},banghist=${options[banghist]},nounset=${options[nounset]},pipefail=${options[pipefail]}" \
+    zsh-llm -- "$current_buffer"); then
     BUFFER=$current_buffer
     CURSOR=$cursor
     zle reset-prompt
